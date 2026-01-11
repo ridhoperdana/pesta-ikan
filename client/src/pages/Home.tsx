@@ -40,49 +40,49 @@ export default function Home() {
         </div>
         
         {/* On-screen controls */}
-        <div className="absolute bottom-10 right-10 flex flex-col items-center gap-2 z-[60]">
+        <div className="absolute bottom-10 right-10 flex flex-col items-center gap-2 z-[60] select-none touch-none">
           <Button 
             size="icon" 
-            className="w-16 h-16 rounded-2xl shadow-xl active:scale-95 transition-transform"
-            onMouseDown={() => setControl("up", true)}
-            onMouseUp={() => setControl("up", false)}
-            onMouseLeave={() => setControl("up", false)}
-            onTouchStart={() => setControl("up", true)}
-            onTouchEnd={() => setControl("up", false)}
+            className="w-16 h-16 rounded-2xl shadow-xl active:scale-95 transition-transform select-none touch-none"
+            onMouseDown={(e) => { e.preventDefault(); setControl("up", true); }}
+            onMouseUp={(e) => { e.preventDefault(); setControl("up", false); }}
+            onMouseLeave={(e) => { e.preventDefault(); setControl("up", false); }}
+            onTouchStart={(e) => { e.preventDefault(); setControl("up", true); }}
+            onTouchEnd={(e) => { e.preventDefault(); setControl("up", false); }}
           >
             <ChevronUp size={32} />
           </Button>
-          <div className="flex gap-2">
+          <div className="flex gap-2 select-none touch-none">
             <Button 
               size="icon" 
-              className="w-16 h-16 rounded-2xl shadow-xl active:scale-95 transition-transform"
-              onMouseDown={() => setControl("left", true)}
-              onMouseUp={() => setControl("left", false)}
-              onMouseLeave={() => setControl("left", false)}
-              onTouchStart={() => setControl("left", true)}
-              onTouchEnd={() => setControl("left", false)}
+              className="w-16 h-16 rounded-2xl shadow-xl active:scale-95 transition-transform select-none touch-none"
+              onMouseDown={(e) => { e.preventDefault(); setControl("left", true); }}
+              onMouseUp={(e) => { e.preventDefault(); setControl("left", false); }}
+              onMouseLeave={(e) => { e.preventDefault(); setControl("left", false); }}
+              onTouchStart={(e) => { e.preventDefault(); setControl("left", true); }}
+              onTouchEnd={(e) => { e.preventDefault(); setControl("left", false); }}
             >
               <ChevronLeft size={32} />
             </Button>
             <Button 
               size="icon" 
-              className="w-16 h-16 rounded-2xl shadow-xl active:scale-95 transition-transform"
-              onMouseDown={() => setControl("down", true)}
-              onMouseUp={() => setControl("down", false)}
-              onMouseLeave={() => setControl("down", false)}
-              onTouchStart={() => setControl("down", true)}
-              onTouchEnd={() => setControl("down", false)}
+              className="w-16 h-16 rounded-2xl shadow-xl active:scale-95 transition-transform select-none touch-none"
+              onMouseDown={(e) => { e.preventDefault(); setControl("down", true); }}
+              onMouseUp={(e) => { e.preventDefault(); setControl("down", false); }}
+              onMouseLeave={(e) => { e.preventDefault(); setControl("down", false); }}
+              onTouchStart={(e) => { e.preventDefault(); setControl("down", true); }}
+              onTouchEnd={(e) => { e.preventDefault(); setControl("down", false); }}
             >
               <ChevronDown size={32} />
             </Button>
             <Button 
               size="icon" 
-              className="w-16 h-16 rounded-2xl shadow-xl active:scale-95 transition-transform"
-              onMouseDown={() => setControl("right", true)}
-              onMouseUp={() => setControl("right", false)}
-              onMouseLeave={() => setControl("right", false)}
-              onTouchStart={() => setControl("right", true)}
-              onTouchEnd={() => setControl("right", false)}
+              className="w-16 h-16 rounded-2xl shadow-xl active:scale-95 transition-transform select-none touch-none"
+              onMouseDown={(e) => { e.preventDefault(); setControl("right", true); }}
+              onMouseUp={(e) => { e.preventDefault(); setControl("right", false); }}
+              onMouseLeave={(e) => { e.preventDefault(); setControl("right", false); }}
+              onTouchStart={(e) => { e.preventDefault(); setControl("right", true); }}
+              onTouchEnd={(e) => { e.preventDefault(); setControl("right", false); }}
             >
               <ChevronRight size={32} />
             </Button>

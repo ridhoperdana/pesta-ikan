@@ -34,6 +34,7 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
   const [gameOver, setGameOver] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const scoreRef = useRef(0);
   const { toast } = useToast();
   const submitScore = useSubmitScore();
 
@@ -129,6 +130,7 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
     };
     enemiesRef.current = [];
     setScore(0);
+    scoreRef.current = 0;
     setGameOver(false);
     setGameStarted(true);
     lastSpawnRef.current = performance.now();
@@ -229,17 +231,21 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
         
         if (dist < playerRef.current.radius + enemy.radius) {
           // Collision!
-          if (playerRef.current.radius > enemy.radius) {
-            // EAT
-            enemiesRef.current.splice(i, 1);
-            // Grow slightly less than linear to prevent exploding size
-            playerRef.current.radius += Math.sqrt(enemy.radius) * 0.2;
-            setScore(s => s + Math.floor(enemy.radius));
-          } else {
-            // DIE
-            handleGameOver(score); // Use current score ref would be better but state is ok here since we stop loop
-            return; // Stop update loop
-          }
+            if (playerRef.current.radius > enemy.radius) {
+              // EAT
+              const earned = Math.floor(enemy.radius);
+              enemiesRef.current.splice(i, 1);
+              // Grow slightly less than linear to prevent exploding size
+              playerRef.current.radius += Math.sqrt(enemy.radius) * 0.2;
+              const newScore = scoreRef.current + earned;
+              scoreRef.current = newScore;
+              setScore(newScore);
+            } else {
+              // DIE
+              // Capture the current score correctly
+              handleGameOver(scoreRef.current); 
+              return; // Stop update loop
+            }
         }
       }
 
@@ -297,12 +303,14 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
     setGameOver(true);
     // Submit score immediately
     try {
+      console.log("Submitting score:", finalScore, "for user:", username);
       await submitScore.mutateAsync({ username, score: finalScore });
       toast({
         title: "Game Over!",
         description: `You scored ${finalScore} points.`,
       });
     } catch (e) {
+      console.error("Score submission error:", e);
       toast({
         title: "Error saving score",
         description: "Could not save your score to the leaderboard.",
@@ -460,10 +468,10 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
 
       {/* HUD */}
       {gameStarted && !gameOver && (
-        <div className="absolute top-6 left-6 flex gap-4 pointer-events-none">
-          <div className="bg-white/90 backdrop-blur border-2 border-white/50 px-6 py-3 rounded-2xl shadow-lg">
-             <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Score</div>
-             <div className="text-3xl font-display font-black text-primary tabular-nums">{score}</div>
+        <div className="absolute top-6 left-6 flex gap-4 pointer-events-none select-none">
+          <div className="bg-white/90 backdrop-blur border-2 border-white/50 px-6 py-3 rounded-2xl shadow-lg select-none">
+             <div className="text-xs font-bold text-slate-400 uppercase tracking-widest select-none">Score</div>
+             <div className="text-3xl font-display font-black text-primary tabular-nums select-none">{score}</div>
           </div>
         </div>
       )}
