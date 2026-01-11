@@ -252,43 +252,72 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
       // 4. Render
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      // Draw Enemies
-      enemiesRef.current.forEach(enemy => {
+      const drawFish = (entity: Entity, isPlayer: boolean) => {
+        const { x, y, radius, color, dx, dy } = entity;
+        const speed = Math.hypot(dx, dy);
+        
+        // Calculate orientation based on movement or mouse
+        let angle = 0;
+        if (isPlayer) {
+          const mDx = mouseRef.current.x - x;
+          const mDy = mouseRef.current.y - y;
+          angle = Math.atan2(mDy, mDx);
+        } else {
+          angle = Math.atan2(dy, dx);
+        }
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+
+        // Body (Oval/Ellipse)
         ctx.beginPath();
-        ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
-        ctx.fillStyle = enemy.color;
+        ctx.ellipse(0, 0, radius, radius * 0.7, 0, 0, Math.PI * 2);
+        ctx.fillStyle = color;
         ctx.fill();
-        ctx.strokeStyle = "rgba(0,0,0,0.1)";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = isPlayer ? "white" : "rgba(0,0,0,0.1)";
+        ctx.lineWidth = isPlayer ? 3 : 1.5;
         ctx.stroke();
+
+        // Tail
+        ctx.beginPath();
+        ctx.moveTo(-radius * 0.8, 0);
+        ctx.lineTo(-radius * 1.4, -radius * 0.5);
+        ctx.lineTo(-radius * 1.4, radius * 0.5);
         ctx.closePath();
-      });
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.stroke();
+
+        // Fin (Top)
+        ctx.beginPath();
+        ctx.moveTo(-radius * 0.2, -radius * 0.6);
+        ctx.quadraticCurveTo(radius * 0.2, -radius * 0.9, radius * 0.4, -radius * 0.5);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.stroke();
+
+        // Eye
+        const eyeX = radius * 0.5;
+        const eyeY = -radius * 0.2;
+        ctx.beginPath();
+        ctx.arc(eyeX, eyeY, radius * 0.2, 0, Math.PI * 2);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(eyeX + radius * 0.05, eyeY, radius * 0.1, 0, Math.PI * 2);
+        ctx.fillStyle = "black";
+        ctx.fill();
+
+        ctx.restore();
+      };
+
+      // Draw Enemies
+      enemiesRef.current.forEach(enemy => drawFish(enemy, false));
 
       // Draw Player
-      ctx.beginPath();
-      ctx.arc(playerRef.current.x, playerRef.current.y, playerRef.current.radius, 0, Math.PI * 2);
-      ctx.fillStyle = playerRef.current.color;
-      ctx.fill();
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      
-      // Draw eyes to show direction
-      const eyeOffsetX = (mouseRef.current.x - playerRef.current.x) * 0.05;
-      const eyeOffsetY = (mouseRef.current.y - playerRef.current.y) * 0.05;
-      
-      ctx.fillStyle = "white";
-      ctx.beginPath();
-      ctx.arc(playerRef.current.x + eyeOffsetX + playerRef.current.radius * 0.3, playerRef.current.y + eyeOffsetY - playerRef.current.radius * 0.3, playerRef.current.radius * 0.25, 0, Math.PI * 2);
-      ctx.arc(playerRef.current.x + eyeOffsetX - playerRef.current.radius * 0.3, playerRef.current.y + eyeOffsetY - playerRef.current.radius * 0.3, playerRef.current.radius * 0.25, 0, Math.PI * 2);
-      ctx.fill();
-      
-      ctx.fillStyle = "black";
-      ctx.beginPath();
-      ctx.arc(playerRef.current.x + eyeOffsetX * 1.5 + playerRef.current.radius * 0.3, playerRef.current.y + eyeOffsetY * 1.5 - playerRef.current.radius * 0.3, playerRef.current.radius * 0.1, 0, Math.PI * 2);
-      ctx.arc(playerRef.current.x + eyeOffsetX * 1.5 - playerRef.current.radius * 0.3, playerRef.current.y + eyeOffsetY * 1.5 - playerRef.current.radius * 0.3, playerRef.current.radius * 0.1, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.closePath();
+      drawFish(playerRef.current, true);
 
       animationFrameRef.current = requestAnimationFrame(update);
     };
