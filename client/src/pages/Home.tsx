@@ -131,8 +131,8 @@ export default function Home() {
         >
           <div className="space-y-2">
             <h1 className="text-6xl md:text-7xl font-display font-black text-white drop-shadow-lg tracking-tight leading-tight">
-              Feeding <br/> 
-              <span className="text-yellow-300">Frenzy!</span>
+              Pesta <br/> 
+              <span className="text-yellow-300">Ikan!</span>
             </h1>
             <p className="text-xl text-blue-100 font-medium max-w-md mx-auto md:mx-0">
               Eat smaller fish to grow. Become the biggest fish in the pond. Don't get eaten!
