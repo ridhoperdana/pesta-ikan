@@ -1,22 +1,50 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { GameCanvas } from "@/components/GameCanvas";
 import { Leaderboard } from "@/components/Leaderboard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Trophy, Fish, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Play, Trophy, Fish, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-react";
 
 export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [username, setUsername] = useState("");
   const [hasJoined, setHasJoined] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    audioRef.current = new Audio("/audio/sea_background.mp3");
+    audioRef.current.loop = true;
+    
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.muted = isMuted;
+      if (hasJoined && !isMuted) {
+        audioRef.current.play().catch(console.error);
+      } else if (!hasJoined) {
+        audioRef.current.pause();
+      }
+    }
+  }, [hasJoined, isMuted]);
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
     if (username.trim().length > 0) {
       setHasJoined(true);
       setIsPlaying(true);
+      if (audioRef.current && !isMuted) {
+        audioRef.current.play().catch(console.error);
+      }
     }
   };
 
@@ -24,6 +52,9 @@ export default function Home() {
     setIsPlaying(false);
     setHasJoined(false);
     setUsername("");
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
   };
 
   const setControl = (dir: "up" | "down" | "left" | "right", active: boolean) => {
@@ -37,6 +68,18 @@ export default function Home() {
       <div className="h-screen w-screen bg-slate-900 overflow-hidden flex flex-col items-center justify-center p-4 relative">
         <div className="flex-1 w-full max-w-6xl relative">
           <GameCanvas username={username} onExit={handleExit} />
+        </div>
+
+        {/* Mute Button */}
+        <div className="absolute top-10 right-10 z-[60]">
+          <Button
+            variant="outline"
+            size="icon"
+            className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur border-white/20 text-white"
+            onClick={() => setIsMuted(!isMuted)}
+          >
+            {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+          </Button>
         </div>
         
         {/* On-screen controls */}
