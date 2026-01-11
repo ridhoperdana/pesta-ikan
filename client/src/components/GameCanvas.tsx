@@ -33,6 +33,7 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
   const submitScore = useSubmitScore();
 
@@ -48,8 +49,66 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
   });
   const enemiesRef = useRef<Entity[]>([]);
   const mouseRef = useRef({ x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 });
+  const controlRef = useRef({ up: false, down: false, left: false, right: false });
   const animationFrameRef = useRef<number>(0);
   const lastSpawnRef = useRef<number>(0);
+
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "ArrowUp":
+        case "w":
+          controlRef.current.up = true;
+          break;
+        case "ArrowDown":
+        case "s":
+          controlRef.current.down = true;
+          break;
+        case "ArrowLeft":
+        case "a":
+          controlRef.current.left = true;
+          break;
+        case "ArrowRight":
+        case "d":
+          controlRef.current.right = true;
+          break;
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "ArrowUp":
+        case "w":
+          controlRef.current.up = false;
+          break;
+        case "ArrowDown":
+        case "s":
+          controlRef.current.down = false;
+          break;
+        case "ArrowLeft":
+        case "a":
+          controlRef.current.left = false;
+          break;
+        case "ArrowRight":
+        case "d":
+          controlRef.current.right = false;
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
+  // Exposed method for on-screen controls
+  (window as any).setGameControl = (dir: "up" | "down" | "left" | "right", active: boolean) => {
+    controlRef.current[dir] = active;
+  };
 
   // Helper: Generate Random Color
   const getRandomColor = () => {
@@ -128,20 +187,25 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
         lastSpawnRef.current = timestamp;
       }
 
-      // 1. Move Player towards mouse (smooth lerp)
-      const targetX = mouseRef.current.x;
-      const targetY = mouseRef.current.y;
+      // 1. Move Player
+      if (isDragging) {
+        // Move towards mouse (smooth lerp)
+        const targetX = mouseRef.current.x;
+        const targetY = mouseRef.current.y;
+        const dx = targetX - playerRef.current.x;
+        const dy = targetY - playerRef.current.y;
+        const speed = 0.15; 
+        playerRef.current.x += dx * speed;
+        playerRef.current.y += dy * speed;
+      } else {
+        // Move via controls
+        const speed = 5;
+        if (controlRef.current.up) playerRef.current.y -= speed;
+        if (controlRef.current.down) playerRef.current.y += speed;
+        if (controlRef.current.left) playerRef.current.x -= speed;
+        if (controlRef.current.right) playerRef.current.x += speed;
+      }
       
-      // Calculate angle and distance
-      const dx = targetX - playerRef.current.x;
-      const dy = targetY - playerRef.current.y;
-      
-      // Speed factor
-      const speed = 0.08; 
-      
-      playerRef.current.x += dx * speed;
-      playerRef.current.y += dy * speed;
-
       // Keep player in bounds
       playerRef.current.x = Math.max(playerRef.current.radius, Math.min(CANVAS_WIDTH - playerRef.current.radius, playerRef.current.x));
       playerRef.current.y = Math.max(playerRef.current.radius, Math.min(CANVAS_HEIGHT - playerRef.current.radius, playerRef.current.y));
@@ -248,14 +312,45 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
   };
 
   // Mouse Move Handler
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const updateMousePos = (clientX: number, clientY: number) => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect) {
       mouseRef.current = {
-        x: (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width),
-        y: (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height),
+        x: (clientX - rect.left) * (CANVAS_WIDTH / rect.width),
+        y: (clientY - rect.top) * (CANVAS_HEIGHT / rect.height),
       };
     }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    updateMousePos(e.clientX, e.clientY);
+    const dist = Math.hypot(playerRef.current.x - mouseRef.current.x, playerRef.current.y - mouseRef.current.y);
+    if (dist < playerRef.current.radius * 2) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    updateMousePos(e.clientX, e.clientY);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Touch handlers for mobile/on-screen control support
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const touch = e.touches[0];
+    updateMousePos(touch.clientX, touch.clientY);
+    const dist = Math.hypot(playerRef.current.x - mouseRef.current.x, playerRef.current.y - mouseRef.current.y);
+    if (dist < playerRef.current.radius * 2) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const touch = e.touches[0];
+    updateMousePos(touch.clientX, touch.clientY);
   };
 
   return (
@@ -270,8 +365,14 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
         ref={canvasRef}
         width={CANVAS_WIDTH}
         height={CANVAS_HEIGHT}
-        className="w-full h-full object-contain game-canvas"
+        className="w-full h-full object-contain game-canvas cursor-pointer"
+        onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleMouseUp}
       />
 
       {/* Start Screen Overlay */}
