@@ -54,6 +54,12 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
   const controlRef = useRef({ up: false, down: false, left: false, right: false });
   const animationFrameRef = useRef<number>(0);
   const lastSpawnRef = useRef<number>(0);
+  const eatSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize sounds
+  useEffect(() => {
+    eatSoundRef.current = new Audio("/audio/eat.wav");
+  }, []);
 
   // Keyboard controls
   useEffect(() => {
@@ -247,6 +253,10 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
           // Collision!
             if (playerRef.current.radius > enemy.radius) {
               // EAT
+              if (eatSoundRef.current) {
+                eatSoundRef.current.currentTime = 0;
+                eatSoundRef.current.play().catch(console.error);
+              }
               const earned = Math.floor(enemy.radius);
               enemiesRef.current.splice(i, 1);
               // Grow slightly less than linear to prevent exploding size
