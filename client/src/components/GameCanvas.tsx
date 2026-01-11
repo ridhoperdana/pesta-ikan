@@ -48,6 +48,7 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
     dx: 0,
     dy: 0,
   });
+  const playerAngleRef = useRef(0);
   const enemiesRef = useRef<Entity[]>([]);
   const mouseRef = useRef({ x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 });
   const controlRef = useRef({ up: false, down: false, left: false, right: false });
@@ -199,13 +200,26 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
         const speed = 0.15; 
         playerRef.current.x += dx * speed;
         playerRef.current.y += dy * speed;
+        
+        if (Math.hypot(dx, dy) > 1) {
+          playerAngleRef.current = Math.atan2(dy, dx);
+        }
       } else {
         // Move via controls
         const speed = 5;
-        if (controlRef.current.up) playerRef.current.y -= speed;
-        if (controlRef.current.down) playerRef.current.y += speed;
-        if (controlRef.current.left) playerRef.current.x -= speed;
-        if (controlRef.current.right) playerRef.current.x += speed;
+        let mvX = 0;
+        let mvY = 0;
+        if (controlRef.current.up) mvY -= speed;
+        if (controlRef.current.down) mvY += speed;
+        if (controlRef.current.left) mvX -= speed;
+        if (controlRef.current.right) mvX += speed;
+        
+        playerRef.current.x += mvX;
+        playerRef.current.y += mvY;
+        
+        if (mvX !== 0 || mvY !== 0) {
+          playerAngleRef.current = Math.atan2(mvY, mvX);
+        }
       }
       
       // Keep player in bounds
@@ -259,9 +273,7 @@ export function GameCanvas({ username, onExit }: GameCanvasProps) {
         // Calculate orientation based on movement or mouse
         let angle = 0;
         if (isPlayer) {
-          const mDx = mouseRef.current.x - x;
-          const mDy = mouseRef.current.y - y;
-          angle = Math.atan2(mDy, mDx);
+          angle = playerAngleRef.current;
         } else {
           angle = Math.atan2(dy, dx);
         }
